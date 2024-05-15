@@ -193,7 +193,7 @@ if args.resume_model_path is None:
 else:
     path_zip = pathlib.Path(args.resume_model_path)
     print("Loading model: " + os.path.abspath(path_zip))
-    model = PPO.load(path_zip, env=env, tensorboard_log=args.experiment_dir)
+    model = DQN.load(path_zip, env=env, tensorboard_log=args.experiment_dir)
 
 if args.inference:
     obs = env.reset()

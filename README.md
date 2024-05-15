@@ -1,4 +1,35 @@
-# Godot RL Agents
+> [!WARNING]
+> This is a test branch for using only discrete actions with SB3 and will not be maintained/updated. 
+> This branch removes support for continuous and multidiscrete actions. It is meant to allow testing training with SB3 and algorithms like DQN that do not support multidiscrete actions.
+> ONNX export support with SB3 is not implemented and will not work without additional modifications.
+
+Only a single discrete action is supported in the Godot env, and can be of any size, e.g of modifying [BallChase extended AIController](https://github.com/edbeeching/godot_rl_agents_examples/blob/main/examples/BallChase/AIController2D.gd) to use it:
+
+Change `get_action_space()` to:
+```gdscript
+func get_action_space():
+	return {"move": {"size": 4, "action_type": "discrete"}}
+```
+
+Change `set_action()` to:
+```gdscript
+func set_action(action):
+	var direction: Vector2
+	match int(action.move):
+		0:
+			direction = Vector2.UP
+		1:
+			direction = Vector2.RIGHT
+		2: 
+			direction = Vector2.DOWN
+		3:
+			direction = Vector2.LEFT
+	_player._action = direction
+```
+
+You can also add more directions and/or an "idle" action per preference.
+
+## Godot RL Agents
 
 Feel free to join our [Discord](https://discord.gg/HMMD2J8SxY) for help and discussions about Godot RL Agents.
 

@@ -3,13 +3,13 @@ import os
 import pathlib
 from typing import Callable
 
-from stable_baselines3 import PPO
+from stable_baselines3 import DQN
 from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.vec_env.vec_monitor import VecMonitor
 
 from godot_rl.core.utils import can_import
 from godot_rl.wrappers.onnx.stable_baselines_export import export_ppo_model_as_onnx
-from godot_rl.wrappers.stable_baselines_wrapper import StableBaselinesGodotEnv
+from godot_rl.wrappers.sbg_single_obs_wrapper import SBGSingleObsEnv
 
 # To download the env source and binary:
 # 1.  gdrl.env_from_hub -r edbeeching/godot_rl_BallChase
@@ -29,14 +29,14 @@ parser.add_argument(
     default="logs/sb3",
     type=str,
     help="The name of the experiment directory, in which the tensorboard logs and checkpoints (if enabled) are "
-    "getting stored.",
+         "getting stored.",
 )
 parser.add_argument(
     "--experiment_name",
     default="experiment",
     type=str,
     help="The name of the experiment, which will be displayed in tensorboard and "
-    "for checkpoint directory and name (if enabled).",
+         "for checkpoint directory and name (if enabled).",
 )
 parser.add_argument("--seed", type=int, default=0, help="seed of the experiment")
 parser.add_argument(
@@ -44,14 +44,14 @@ parser.add_argument(
     default=None,
     type=str,
     help="The path to a model file previously saved using --save_model_path or a checkpoint saved using "
-    "--save_checkpoints_frequency. Use this to resume training or infer from a saved model.",
+         "--save_checkpoints_frequency. Use this to resume training or infer from a saved model.",
 )
 parser.add_argument(
     "--save_model_path",
     default=None,
     type=str,
     help="The path to use for saving the trained sb3 model after training is complete. Saved model can be used later "
-    "to resume training. Extension will be set to .zip",
+         "to resume training. Extension will be set to .zip",
 )
 parser.add_argument(
     "--save_checkpoint_frequency",
@@ -74,29 +74,29 @@ parser.add_argument(
     default=1_000_000,
     type=int,
     help="The number of environment steps to train for, default is 1_000_000. If resuming from a saved model, "
-    "it will continue training for this amount of steps from the saved state without counting previously trained "
-    "steps",
+         "it will continue training for this amount of steps from the saved state without counting previously trained "
+         "steps",
 )
 parser.add_argument(
     "--inference",
     default=False,
     action="store_true",
     help="Instead of training, it will run inference on a loaded model for --timesteps steps. "
-    "Requires --resume_model_path to be set.",
+         "Requires --resume_model_path to be set.",
 )
 parser.add_argument(
     "--linear_lr_schedule",
     default=False,
     action="store_true",
     help="Use a linear LR schedule for training. If set, learning rate will decrease until it reaches 0 at "
-    "--timesteps"
-    "value. Note: On resuming training, the schedule will reset. If disabled, constant LR will be used.",
+         "--timesteps"
+         "value. Note: On resuming training, the schedule will reset. If disabled, constant LR will be used.",
 )
 parser.add_argument(
     "--viz",
     action="store_true",
     help="If set, the simulation will be displayed in a window during training. Otherwise "
-    "training will run without rendering the simulation. This setting does not apply to in-editor training.",
+         "training will run without rendering the simulation. This setting does not apply to in-editor training.",
     default=False,
 )
 parser.add_argument("--speedup", default=1, type=int, help="Whether to speed up the physics in the env")
@@ -140,9 +140,9 @@ abs_path_checkpoint = os.path.abspath(path_checkpoint)
 if args.save_checkpoint_frequency is not None and os.path.isdir(path_checkpoint):
     raise RuntimeError(
         abs_path_checkpoint + " folder already exists. "
-        "Use a different --experiment_dir, or --experiment_name,"
-        "or if previous checkpoints are not needed anymore, "
-        "remove the folder containing the checkpoints. "
+                              "Use a different --experiment_dir, or --experiment_name,"
+                              "or if previous checkpoints are not needed anymore, "
+                              "remove the folder containing the checkpoints. "
     )
 
 if args.inference and args.resume_model_path is None:
@@ -151,9 +151,10 @@ if args.inference and args.resume_model_path is None:
 if args.env_path is None and args.viz:
     print("Info: Using --viz without --env_path set has no effect, in-editor training will always render.")
 
-env = StableBaselinesGodotEnv(
+env = SBGSingleObsEnv(
     env_path=args.env_path, show_window=args.viz, seed=args.seed, n_parallel=args.n_parallel, speedup=args.speedup
 )
+
 env = VecMonitor(env)
 
 
@@ -181,13 +182,11 @@ def linear_schedule(initial_value: float) -> Callable[[float], float]:
 
 
 if args.resume_model_path is None:
-    learning_rate = 0.0003 if not args.linear_lr_schedule else linear_schedule(0.0003)
-    model: PPO = PPO(
-        "MultiInputPolicy",
+    learning_rate = 1e-4 if not args.linear_lr_schedule else linear_schedule(1e-4)
+    model: DQN = DQN(
+        "MlpPolicy",
         env,
-        ent_coef=0.0001,
         verbose=2,
-        n_steps=32,
         tensorboard_log=args.experiment_dir,
         learning_rate=learning_rate,
     )

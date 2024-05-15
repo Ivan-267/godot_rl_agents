@@ -29,6 +29,8 @@ func set_action(action):
 
 You can also add more directions and/or an "idle" action per preference.
 
+For training, you can use the modified [SB3 example](https://github.com/Ivan-267/godot_rl_agents/blob/discrete_actions_only/examples/stable_baselines3_example.py) from this branch, which is set to use DQN.
+
 ## Godot RL Agents
 
 Feel free to join our [Discord](https://discord.gg/HMMD2J8SxY) for help and discussions about Godot RL Agents.
